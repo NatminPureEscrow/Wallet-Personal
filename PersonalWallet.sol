@@ -3,28 +3,14 @@ pragma solidity ^0.4.22;
 //import "./Ownable.sol";
 import "./GeneralContract.sol";
 
-contract ERC223 {
-	// ERC20 standard function
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    // ERC223 Standard functions
-    function symbol() public view returns (string);
-}
-
 contract PersonalWallet is Ownable {
 	using SafeMath for uint256;
 
-	address contractOwner;
-	string walletPassword;
-	address generalContractAddress;
-   	GeneralContract generalContract;
+	GeneralContract public settings;
 
-	constructor (address _generalContractAddress, string _walletPassword) public {
+	constructor (address _generalContractAddress) public {
 		require(_generalContractAddress != address(0));
-		contractOwner = msg.sender;
-		generalContractAddress = _generalContractAddress;
-		generalContract = GeneralContract(_generalContractAddress);
-		walletPassword = _walletPassword;
+		settings = GeneralContract(_generalContractAddress);
 	} 
 
 	// Token fallback required for ERC223 standard
@@ -37,30 +23,26 @@ contract PersonalWallet is Ownable {
 	// Custom wallet transfer function 
 	function transfer(
 		address _to, 
-		uint256 _value, 
-		string _password) public ownerOnly returns (bool) {
-		    
-		require(keccak256(walletPassword) == keccak256(_password));
-
-		address _tokenAddress = generalContract.getTokenAddress();
-		ERC223 _tokenContract = ERC223(_tokenAddress);
+		uint256 _value) public ownerOnly returns (bool) {
+		
+		address _tokenAddress = settings.getSettingAddress('TokenContract');
+		ERC20Standard _tokenContract = ERC20Standard(_tokenAddress);
 		_tokenContract.transfer(_to,_value);
 
 		return true;
 	}
 
 	function setGeneralContract(address _newGeneralContractAddress) public ownerOnly {
-		generalContractAddress = _newGeneralContractAddress;
-		generalContract = GeneralContract(_newGeneralContractAddress);
+		settings = GeneralContract(_newGeneralContractAddress);
 	}
 
-	function getGeneralContract() public ownerOnly returns (address) {
-		return generalContractAddress;
-	}
 
 	// Destroying the wallet and returns the contents to the owner
 	function destroyWallet(address _owner) public ownerOnly {
+		address _tokenAddress = settings.getSettingAddress('TokenContract');
+		ERC20Standard _tokenContract = ERC20Standard(_tokenAddress);
+		require(_tokenContract.balanceOf(this) <= 0);
+
 		selfdestruct(_owner);
 	}
-
 }

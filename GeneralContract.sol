@@ -2,55 +2,46 @@ pragma solidity ^0.4.22;
 
 import "./Ownable.sol";
 
-// This contact sets the list of allowed tokens 
-// to be received by the personal wallet
+//ERC20 Standard interface specification
+contract ERC20Standard {
+    function balanceOf(address _user) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+
+// This contact sets the list of general settings used by all contracts 
 contract GeneralContract is Ownable {
 	using SafeMath for uint256;
 
-	address contractOwner;
-	address tokenAddress;
-	uint256 tokenPrice;
-	address systemWallet;
+	struct SettingDetail {
+		address settingAddress;
+		string settingDescription;		
+	}
 
-	mapping(address => bool) internal AllowedTokens;
+	mapping(string => SettingDetail) internal settings;
 
-    constructor (
-    	address _tokenAddress,
-		uint256 _tokenPrice,
-		address _systemWallet) public {
-		contractOwner = msg.sender;
-		tokenAddress = _tokenAddress;
-	 	tokenPrice = _tokenPrice;
-		systemWallet = _systemWallet;
+    constructor () public {
+
 	} 
 	
-	// Sets the token address for the application general options
-	function setTokenAddress(address _tokenAddress) public ownerOnly {
-		tokenAddress = _tokenAddress;
+	// Update a specific setting
+	function setSetting(string _name, address _address, string _description) public ownerOnly {
+		settings[_name].settingAddress = _address;
+		settings[_name].settingDescription = _description;
 	}
 
-	// Returns the token address for the application general options
-	function getTokenAddress() public view returns (address) {
-		return tokenAddress;
+	// Returns the specific setting's address
+	function getSettingAddress(string _name) public view returns (address) {
+		return settings[_name].settingAddress;
 	}
 
-	// Sets the token price for the application general options
-	function setTokenPrice(uint256 _tokenPrice) public ownerOnly {
-		tokenPrice = _tokenPrice;
-	}
-
-	// Returns the token price for the application general options
-	function getTokenPrice() public view returns (uint256) {
-		return tokenPrice;
-	}
-
-	// Sets the system wallet address for the application general options
-	function setSystemWallet(address _systemWallet) public ownerOnly {
-		systemWallet = _systemWallet;
-	}
-
-	// Returns the system wallet address for the application general options
-	function getSystemWallet() public view returns (address) {
-		return systemWallet;
+	// Returns the specific setting's description 
+	function getSettingDescription(string _name) public view returns (string) {
+		return settings[_name].settingDescription;
 	}
 }
