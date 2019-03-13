@@ -1,15 +1,15 @@
 pragma solidity ^0.4.22;
 
-//import "./Ownable.sol";
 import "./GeneralContract.sol";
 
 contract PersonalWallet is Ownable {
 	using SafeMath for uint256;
 
-	GeneralContract public settings;
+	GeneralContract settings;
 
 	constructor (address _generalContractAddress) public {
 		require(_generalContractAddress != address(0));
+
 		settings = GeneralContract(_generalContractAddress);
 	} 
 
@@ -22,12 +22,13 @@ contract PersonalWallet is Ownable {
 
 	// Custom wallet transfer function 
 	function transfer(
+		string _ticker,
 		address _to, 
-		uint256 _value) public ownerOnly returns (bool) {
+		uint256 _amount) public ownerOnly returns (bool) {
 		
-		address _tokenAddress = settings.getSettingAddress('TokenContract');
+		address _tokenAddress = settings.getSettingAddress(_ticker);
 		ERC20Standard _tokenContract = ERC20Standard(_tokenAddress);
-		_tokenContract.transfer(_to,_value);
+		require(_tokenContract.transfer(_to, _amount));
 
 		return true;
 	}
@@ -36,13 +37,10 @@ contract PersonalWallet is Ownable {
 		settings = GeneralContract(_newGeneralContractAddress);
 	}
 
-
-	// Destroying the wallet and returns the contents to the owner
-	function destroyWallet(address _owner) public ownerOnly {
-		address _tokenAddress = settings.getSettingAddress('TokenContract');
+	// Returns the personal wallet balance
+	function balance(string _ticker) public view returns (uint256) {
+		address _tokenAddress = settings.getSettingAddress(_ticker);
 		ERC20Standard _tokenContract = ERC20Standard(_tokenAddress);
-		require(_tokenContract.balanceOf(this) <= 0);
-
-		selfdestruct(_owner);
+		return _tokenContract.balanceOf(this);
 	}
 }
